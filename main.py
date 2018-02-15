@@ -1,4 +1,5 @@
 import devices
+import os.path
 import time, calendar
 import sqlite3 as sql
 try:
@@ -6,12 +7,28 @@ try:
 except ImportError:
     from retic_dummies import *
 
+    
+HOST, PORT = '0.0.0.0', 8712
+
 from flask import *
 
 app = Flask('iotrickster')
+app.config.from_object(__name__)
+
+# Load default config and override config from an environment variable
+app.config.update(dict(
+    DEBUG=True,
+    DATABASE=os.path.join(app.root_path, 'iotrickster.db'),
+    DEVICES={}
+))
+app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 
 @app.route("/")
-def index():    
+def index():
+    db = get_db()
+    cur = db.execute('select mac, devalias from aliases order by mac desc')
+    entries = cur.fetchall()
+    print(entries)
     return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>')
@@ -40,6 +57,12 @@ def signal_temp():
     # redirect is unneccessary, dunno what else to put here
     return redirect(url_for('index'))
 
+@app.teardown_appcontext
+def close_db(error):
+    """Closes the database again at the end of the request."""
+    if hasattr(g, 'sqlite_db'):
+        g.sqlite_db.close()
+
 def c_to_f(c:float)->float:
     return c * (9 / 5) + 32
 
@@ -62,12 +85,32 @@ def format_gmt_for_local(t:time.struct_time)->Tuple[str,str]:
 def get_devices():
     return app.config['DEVICES']
 
+def get_db():
+    """Opens a new database connection if there is none yet for the
+    current application context.
+    """
+    if not hasattr(g, 'sqlite_db'):
+        g.sqlite_db = connect_db()
+    return g.sqlite_db
+
+def connect_db():
+    rv = sql.connect(app.config['DATABASE'])
+    rv.row_factory = sql.Row
+    return rv
+
+def init_db():
+    db = get_db()
+    with app.open_resource('schema.sql', mode='r') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
+
+@app.cli.command('initdb')
+def initdb_command():
+    """Initializes the database."""
+    init_db()
+    print('Initialized the database.')
+
 if __name__ == "__main__":
-    HOST, PORT = '0.0.0.0', 8712
-    
-    app.config.update(dict(
-        DEBUG=True,
-        DEVICES={},
-    ))
-    app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
+    if not os.path.exists(app.config['DATABASE']):
+        init_db()
     app.run(host=HOST, port=PORT, debug=True)

@@ -1,17 +1,23 @@
 import devices
 import time, calendar
+import sqlite3 as sql
+try:
+    from retic.typing import *
+except ImportError:
+    from retic_dummies import *
+
 from flask import *
 
 app = Flask('iotrickster')
 
 @app.route("/")
 def index():    
-    return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, gmt_to_local=gmt_to_local)
+    return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>')
 def details(mac):
     dev = get_devices()[mac]
-    return render_template('details.html', dev=dev, c_to_f=c_to_f, gmt_to_local=gmt_to_local)
+    return render_template('details.html', dev=dev, c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>/set_alias', methods=['POST'])
 def set_alias(mac):
@@ -38,17 +44,20 @@ def c_to_f(c:float)->float:
     return c * (9 / 5) + 32
 
 def gmt_to_local(t:time.struct_time)->time.struct_time:
-    tm = time.localtime(calendar.timegm(t))
-    # Also display time in conventional US format with am/pm
-    apm = 'am'
-    if tm.tm_hour == 0:
-        tm.tm_hour = 12
-    elif tm.tm_hour >= 12:
-        apm = 'pm'
-        if tm.tm_hour > 12:
-            tm.tm_hour -= 12
-    return tm, apm
-            
+    return time.localtime(calendar.timegm(t))
+
+def format_gmt_for_local(t:time.struct_time)->Tuple[str,str]:
+    t = gmt_to_local(t)
+    ampm = 'am'
+    hour = t.tm_hour
+    if hour == 0:
+        hour = 12
+    elif hour >= 12:
+        ampm = 'pm'
+        if hour > 12:
+            hour -= 12
+    return '{}:{:02d}:{:02d}{}'.format(hour, t.tm_min, t.tm_sec, ampm),\
+           '{}/{}/{}'.format(t.tm_year, t.tm_mon, t.tm_mday)
 
 def get_devices():
     return app.config['DEVICES']

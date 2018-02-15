@@ -4,7 +4,7 @@ import requests
 import argparse
 
 parser = argparse.ArgumentParser(description='Test the IoTrickster server with bogus data')
-parser.add_argument('host', help='Host to use (excluding "http://" or the port', nargs=1)
+parser.add_argument('host', help='Host to use (excluding "http://" or the port)', nargs=1)
 
 args = parser.parse_args(sys.argv[1:])
 PORT = 8712

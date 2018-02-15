@@ -1,5 +1,9 @@
 import time
-from retic.typing import *
+
+try:
+    from retic.typing import *
+except ImportError:
+    from retic_dummies import *
 
 @fields({'record': List[Tuple[time.struct_time, Any]]})
 class Log:

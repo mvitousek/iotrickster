@@ -1,7 +1,8 @@
 import devices
 import time, calendar
 from flask import *
-app = Flask('iottrickster')
+
+app = Flask('iotrickster')
 
 @app.route("/")
 def index():    
@@ -13,6 +14,7 @@ def details(mac):
 
 @app.route('/signal/temp', methods=['POST'])
 def signal_temp():
+    # Request has mac address 'mac' and temperature 'temp' fields
     mac = request.form['mac']
     temp = request.form['temp']
     devs = get_devices()
@@ -26,6 +28,7 @@ def c_to_f(c:float)->float:
 
 def gmt_to_local(t:time.struct_time)->time.struct_time:
     tm = time.localtime(calendar.timegm(t))
+    # Also display time in conventional US format with am/pm
     apm = 'am'
     if tm.tm_hour == 0:
         tm.tm_hour = 12
@@ -42,13 +45,9 @@ def get_devices():
 if __name__ == "__main__":
     HOST, PORT = '0.0.0.0', 8712
     
-#    devices = temp_server.start_server(HOST, PORT)
     app.config.update(dict(
         DEBUG=True,
         DEVICES={},
-        SECRET_KEY=b'MYSECRETKEY',
-        USERNAME='admin',
-        PASSWORD='default'
     ))
     app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
     app.run(host=HOST, port=PORT, debug=True)

@@ -1,0 +1,10 @@
+{% extends "template.html" %}
+{% block body %}
+  <ul class="entries">
+  {% for mac, dev in devices|dictsort %}
+    <li><h2>{{ c_to_f(dev.current_temp())|round(1) }}°F</h2>{{ mac }}</li>
+  {% else %}
+    <li><em>No devices</em></li>
+  {% endfor %}
+  </ul>
+{% endblock %}

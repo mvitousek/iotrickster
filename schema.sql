@@ -6,7 +6,8 @@ create table aliases (
 
 drop table if exists temp_records;
 create table temp_records (
-	mac text primary key not null,
+        id integer not null primary key autoincrement,
+	mac text not null,
 	unixtime integer not null,
 	temperature real not null
 );

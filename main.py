@@ -26,9 +26,8 @@ app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 @app.route("/")
 def index():
     db = get_db()
-    cur = db.execute('select mac, devalias from aliases order by mac desc')
+    cur = db.execute('select id, mac, unixtime, temperature from temp_records order by mac desc')
     entries = cur.fetchall()
-    print(entries)
     return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>')
@@ -50,6 +49,17 @@ def signal_temp():
     # Request has mac address 'mac' and temperature 'temp' fields
     mac = request.form['mac']
     temp = request.form['temp']
+    db = get_db()
+
+    cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
+    res = cur.fetchone()[0]
+    if not res:
+        db.execute('insert into aliases (mac, devalias) values (?, ?)',  [mac, mac])
+    
+    # Insert a record into the temperature log.
+    db.execute('insert into temp_records (mac, unixtime, temperature) values (?, datetime("now"), ?)',
+               [mac, temp])
+    db.commit()
     devs = get_devices()
     if mac not in devs:
         devs[mac] = devices.Device(mac)

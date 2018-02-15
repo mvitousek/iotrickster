@@ -21,6 +21,7 @@ def set_alias(mac):
     return redirect(url_for('details', mac=mac))
 
 
+# Sensors POST to this address, shouldn't be usable from browser
 @app.route('/signal/temp', methods=['POST'])
 def signal_temp():
     # Request has mac address 'mac' and temperature 'temp' fields
@@ -30,6 +31,7 @@ def signal_temp():
     if mac not in devs:
         devs[mac] = devices.Device(mac)
     devs[mac].record_temp(float(temp))
+    # redirect is unneccessary, dunno what else to put here
     return redirect(url_for('index'))
 
 def c_to_f(c:float)->float:

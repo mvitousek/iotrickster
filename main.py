@@ -23,11 +23,18 @@ app.config.update(dict(
 ))
 app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 
-@app.route("/")
+@app.route('/')
 def index():
     db = get_db()
-    cur = db.execute('select id, mac, unixtime, temperature from temp_records order by mac desc')
-    entries = cur.fetchall()
+
+    # UNDER DEVELOPENT
+    # # Get all devices and their names
+    # cur = db.execute('select mac, devalias from aliases order by devalias desc')
+    # devices = cur.fetchall()
+    
+    # data = []
+    # for dev in devices:
+    #     cur = db.execute('select * from temp_records where mac="{}" and id=(select max')
     return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>')

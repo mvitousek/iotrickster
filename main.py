@@ -10,7 +10,16 @@ def index():
 
 @app.route('/details/<mac>')
 def details(mac):
-    return render_template('details.html', mac=mac)
+    dev = get_devices()[mac]
+    return render_template('details.html', dev=dev, c_to_f=c_to_f, gmt_to_local=gmt_to_local)
+
+@app.route('/details/<mac>/set_alias', methods=['POST'])
+def set_alias(mac):
+    alias = request.form['new_alias']
+    dev = get_devices()[mac]
+    dev.alias = alias
+    return redirect(url_for('details', mac=mac))
+
 
 @app.route('/signal/temp', methods=['POST'])
 def signal_temp():

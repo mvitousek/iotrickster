@@ -1,4 +1,19 @@
 {% extends "template.html" %}
 {% block body %}
-  <h2> {{ mac }}</h2>
+  <h1> Device <i>{{ dev.get_alias() }}</i></h1> 
+  {% if dev.alias != None %}
+  (mac address {{ dev.mac }})
+  {% endif %}
+  {% set time, temp = dev.last_temp() %}
+  {% set time, apm = gmt_to_local(time) %}  
+  <h2>Current temperature: <b>{{ c_to_f(temp)|round(1) }}°F</b></h2>
+  <h2>Last recorded: <b>{{ time.tm_hour }}:{{ '{:02d}'.format(time.tm_min) }}:{{ '{:02d}'.format(time.tm_sec) }}{{ apm }}, {{ time.tm_year }}/{{ time.tm_mon }}/{{ time.tm_mday }}</b></h2>
+    <form action="{{ url_for('set_alias', mac=dev.mac) }}" method="post" class="set-alias">
+      <dl>
+        <dt>Change alias for {{ dev.get_alias() }}:
+        <dd><input type="text" size="30" name="new_alias" value="{{ dev.get_alias() }}">
+        <dd><input type="submit" value="Confirm">
+      </dl>
+    </form>
+    <a href={{ url_for('index') }}>Return to list</a>
 {% endblock %}

@@ -19,10 +19,11 @@ class Log:
     def __len__(self:'TimedLog')->int:
         return len(self.record)
 
-@fields({'mac': str, 'updates': Log, 'temperatures': Log})
+@fields({'mac': str, 'updates': Log, 'temperatures': Log, 'alias':str})
 class Device:
     def __init__(self:'Device', mac:str):
         self.mac = mac
+        self.alias = None
         self.updates = Log()
         self.temperatures = Log()
 
@@ -39,6 +40,12 @@ class Device:
 
     def temp_recorded(self:'Device')->bool:
         return len(self.temperatures) > 0
+
+    def get_alias(self:'Device')->str:
+        if self.alias is not None:
+            return self.alias
+        else:
+            return self.mac
 
         
             

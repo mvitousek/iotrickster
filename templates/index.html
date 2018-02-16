@@ -2,11 +2,9 @@
 {% block body %}
   <h1>IoTrickster!</h1>
   <ul class="templist">
-  {% for mac, dev in devices|dictsort %}
-  {% set time, temp = dev.last_temp() %}
-  {% set time, date = timeformat(time) %}  
-  <li><h2><a href={{ url_for('details', mac=mac) }}> {{ dev.get_alias() }}</a></h2>
-    {{ c_to_f(temp)|round(1) }}°F at {{ time }}, {{ date }}</li>
+  {% for mac, alias, time, date, temp in data %}
+  <li><h2><a href={{ url_for('details', mac=mac) }}> {{ alias }}</a></h2>
+    {{ temp|round(1) }}°F at {{ time }}, {{ date }}</li>
   {% else %}
     <li><em>No devices</em></li>
   {% endfor %}

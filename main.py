@@ -1,4 +1,3 @@
-import devices
 import os.path
 import time, calendar
 import sqlite3 as sql
@@ -18,9 +17,9 @@ app.config.from_object(__name__)
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DEBUG=True,
-    DATABASE=os.path.join(app.root_path, 'iotrickster.db'),
-    DEVICES={}
+    DATABASE=os.path.join(app.root_path, 'database', 'iotrickster.db')
 ))
+
 app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 
 @app.route('/')
@@ -28,27 +27,38 @@ def index():
     db = get_db()
 
     # Get all devices and their names
-    cur = db.execute('select mac, devalias from aliases order by devalias desc')
+    cur = db.execute('select mac, devalias from aliases order by devalias asc')
     devices = cur.fetchall()
     
     data = []
-    for dev in devices:
-        cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(dev[0]))
-        record = cur.fetchone()
-        data.append((dev[0], dev[1], record[2], record[3]))
-    print(data)
-    return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
+    for mac, alias in devices:
+        cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(mac))
+        _, _, unixtime, temp = cur.fetchone()
+        time, date = format_gmt_for_local(unixtime)
+        data.append((mac, alias, time, date, c_to_f(temp)))
+        
+    return render_template('index.html', data=data)
 
 @app.route('/details/<mac>')
 def details(mac):
-    dev = get_devices()[mac]
-    return render_template('details.html', dev=dev, c_to_f=c_to_f, timeformat=format_gmt_for_local)
+    db = get_db()
+
+    cur = db.execute('select mac, devalias from aliases where mac="{}"'.format(mac))
+    _, alias = cur.fetchone()
+    cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(mac))
+    _, _, unixtime, temp = cur.fetchone()
+    time, date = format_gmt_for_local(unixtime)
+    
+    return render_template('details.html', mac=mac, alias=alias, time=time, date=date, temp=c_to_f(temp))
 
 @app.route('/details/<mac>/set_alias', methods=['POST'])
 def set_alias(mac):
     alias = request.form['new_alias']
-    dev = get_devices()[mac]
-    dev.alias = alias
+    
+    db = get_db()
+    db.execute('update aliases set devalias="{}" where mac="{}"'.format(alias, mac))
+    db.commit()
+    
     return redirect(url_for('details', mac=mac))
 
 
@@ -63,15 +73,12 @@ def signal_temp():
     cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
     res = cur.fetchone()[0]
     if not res:
-        db.execute('insert into aliases (mac, devalias) values (?, ?)',  [mac, mac])
+        db.execute('insert into aliases (mac, devalias) values ("{}", "{}")'.format(mac, mac))
     
     # Insert a record into the temperature log.
-    db.execute('insert into temp_records (mac, unixtime, temperature) values (?, strftime("%s", "now"), ?)', [mac, temp])
+    db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", strftime("%s", "now"), {})'.format(mac, temp))
     db.commit()
-    devs = get_devices()
-    if mac not in devs:
-        devs[mac] = devices.Device(mac)
-    devs[mac].record_temp(float(temp))
+
     # redirect is unneccessary, dunno what else to put here
     return redirect(url_for('index'))
 
@@ -84,8 +91,8 @@ def close_db(error):
 def c_to_f(c:float)->float:
     return c * (9 / 5) + 32
 
-def gmt_to_local(t:time.struct_time)->time.struct_time:
-    return time.localtime(calendar.timegm(t))
+def gmt_to_local(t:int)->time.struct_time:
+    return time.localtime(t)
 
 def format_gmt_for_local(t:time.struct_time)->Tuple[str,str]:
     t = gmt_to_local(t)
@@ -99,9 +106,6 @@ def format_gmt_for_local(t:time.struct_time)->Tuple[str,str]:
             hour -= 12
     return '{}:{:02d}:{:02d}{}'.format(hour, t.tm_min, t.tm_sec, ampm),\
            '{}/{}/{}'.format(t.tm_year, t.tm_mon, t.tm_mday)
-
-def get_devices():
-    return app.config['DEVICES']
 
 def get_db():
     """Opens a new database connection if there is none yet for the
@@ -118,7 +122,7 @@ def connect_db():
 
 def init_db():
     db = get_db()
-    with app.open_resource('schema.sql', mode='r') as f:
+    with app.open_resource(os.path.join('database', 'schema.sql'), mode='r') as f:
         db.cursor().executescript(f.read())
     db.commit()
 

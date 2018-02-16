@@ -1,17 +1,15 @@
 {% extends "template.html" %}
 {% block body %}
-  <h1> Device <i>{{ dev.get_alias() }}</i></h1> 
-  {% if dev.alias != None %}
-  (mac address {{ dev.mac }})
-  {% endif %}
-  {% set time, temp = dev.last_temp() %}
-  {% set time, date = timeformat(time) %}  
-  <h2>Current temperature: <b>{{ c_to_f(temp)|round(1) }}°F</b></h2>
+  <h1> Device <i>{{ alias }}</i></h1> 
+  {% if mac != alias %}
+  (mac address {{ mac }})
+  {% endif %}  
+  <h2>Current temperature: <b>{{ temp|round(1) }}°F</b></h2>
   <h2>Last recorded: <b>{{ time }}, {{ date }}</b></h2>
-    <form action="{{ url_for('set_alias', mac=dev.mac) }}" method="post" class="set-alias">
+    <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
-        <dt>Change alias for {{ dev.get_alias() }}:
-        <dd><input type="text" size="30" name="new_alias" value="{{ dev.get_alias() }}">
+        <dt>Change alias for {{ alias }}:
+        <dd><input type="text" size="30" name="new_alias" value="{{ alias }}">
         <dd><input type="submit" value="Confirm">
       </dl>
     </form>

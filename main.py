@@ -7,7 +7,7 @@ except ImportError:
     from retic_dummies import *
 
     
-HOST, PORT = '0.0.0.0', 8712
+HOST, PORT = '0.0.0.0', 8713
 
 from flask import *
 
@@ -27,7 +27,7 @@ def index():
     db = get_db()
 
     # Get all devices and their names
-    cur = db.execute('select mac, devalias from aliases order by devalias asc')
+    cur = db.execute('select mac, devalias from aliases order by lower(devalias)')
     devices = cur.fetchall()
     
     data = []

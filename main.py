@@ -27,14 +27,16 @@ app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 def index():
     db = get_db()
 
-    # UNDER DEVELOPENT
-    # # Get all devices and their names
-    # cur = db.execute('select mac, devalias from aliases order by devalias desc')
-    # devices = cur.fetchall()
+    # Get all devices and their names
+    cur = db.execute('select mac, devalias from aliases order by devalias desc')
+    devices = cur.fetchall()
     
-    # data = []
-    # for dev in devices:
-    #     cur = db.execute('select * from temp_records where mac="{}" and id=(select max')
+    data = []
+    for dev in devices:
+        cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(dev[0]))
+        record = cur.fetchone()
+        data.append((dev[0], dev[1], record[2], record[3]))
+    print(data)
     return render_template('index.html', devices=get_devices(), c_to_f=c_to_f, timeformat=format_gmt_for_local)
 
 @app.route('/details/<mac>')
@@ -64,8 +66,7 @@ def signal_temp():
         db.execute('insert into aliases (mac, devalias) values (?, ?)',  [mac, mac])
     
     # Insert a record into the temperature log.
-    db.execute('insert into temp_records (mac, unixtime, temperature) values (?, datetime("now"), ?)',
-               [mac, temp])
+    db.execute('insert into temp_records (mac, unixtime, temperature) values (?, strftime("%s", "now"), ?)', [mac, temp])
     db.commit()
     devs = get_devices()
     if mac not in devs:

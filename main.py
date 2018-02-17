@@ -2,7 +2,7 @@ import os.path
 import time, calendar
 import sqlite3 as sql
 
-from flask import 
+from flask import *
 
 try:
     from retic.typing import *

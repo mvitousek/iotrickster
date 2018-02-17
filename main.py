@@ -1,15 +1,17 @@
 import os.path
 import time, calendar
 import sqlite3 as sql
+
+from flask import 
+
 try:
     from retic.typing import *
 except ImportError:
+    # If you don't have Reticulated Python installed
     from retic_dummies import *
 
-    
-HOST, PORT = '0.0.0.0', 8713
 
-from flask import *
+HOST, PORT = '0.0.0.0', 8713
 
 app = Flask('iotrickster')
 app.config.from_object(__name__)
@@ -40,7 +42,7 @@ def index():
     return render_template('index.html', data=data)
 
 @app.route('/details/<mac>')
-def details(mac):
+def details(mac:str):
     db = get_db()
 
     cur = db.execute('select mac, devalias from aliases where mac="{}"'.format(mac))
@@ -52,7 +54,7 @@ def details(mac):
     return render_template('details.html', mac=mac, alias=alias, time=time, date=date, temp=c_to_f(temp))
 
 @app.route('/details/<mac>/set_alias', methods=['POST'])
-def set_alias(mac):
+def set_alias(mac:str):
     alias = request.form['new_alias']
     
     db = get_db()

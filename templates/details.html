@@ -1,6 +1,6 @@
 {% extends "template.html" %}
 {% block body %}
-  <h1> Device <i>{{ alias }}</i></h1> 
+  <h1> Device <i>{{ alias|safe }}</i></h1> 
   {% if mac != alias %}
   (mac address {{ mac }})
   {% endif %}  
@@ -8,8 +8,8 @@
   <h2>Last recorded: <b>{{ time }}, {{ date }}</b></h2>
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
-        <dt>Change alias for {{ alias }}:
-        <dd><input type="text" size="30" name="new_alias" value="{{ alias }}">
+        <dt>Change alias for {{ alias|safe }}:
+        <dd><input type="text" size="30" name="new_alias" value="{{ alias|safe }}">
         <dd><input type="submit" value="Confirm">
       </dl>
     </form>

@@ -2,16 +2,25 @@
 {% block body %}
   <h1> Device <i>{{ alias|safe }}</i></h1> 
   {% if mac != alias %}
-  (mac address {{ mac }})
+  (unique id <i>{{ mac }}</i>)
   {% endif %}  
-  <h2>Current temperature: <b>{{ temp|round(1) }}°F</b></h2>
+  {% set td, temp = data[0] %}
+  {% set time, date = tdformat(td) %}
+  <h2>Current temperature: <b>{{ tempformat(temp)|round(1) }}°F</b></h2>
   <h2>Last recorded: <b>{{ time }}, {{ date }}</b></h2>
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
-        <dt>Change alias for {{ alias|safe }}:
+        <dt>Change alias for <i>{{ alias|safe }}</i>:
         <dd><input type="text" size="30" name="new_alias" value="{{ alias|safe }}">
         <dd><input type="submit" value="Confirm">
       </dl>
     </form>
-    <a href={{ url_for('index') }}>Return to list</a>
+    <h2>Last {{ data|length }} readings:</h2>
+    <table class="hist-table">
+      {% for td, temp in data %}
+      {% set time, date = tdformat(td) %}
+      <tr><td>{{ date }}</td> <td>{{ time }}</td> <td>{{ tempformat(temp)|round(1) }}°F</td></tr>
+      {% endfor %}
+    </table>
+    <a href={{ url_for('index') }}>Return to device list</a>
 {% endblock %}

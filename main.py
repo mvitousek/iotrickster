@@ -34,8 +34,8 @@ def index():
     
     data = []
     for mac, alias in devices:
-        cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(mac))
-        _, _, unixtime, temp = cur.fetchone()
+        cur = db.execute('select max(id), unixtime, temperature from temp_records where mac="{}"'.format(mac))
+        _, unixtime, temp = cur.fetchone()
         time, date = format_gmt_for_local(unixtime)
         data.append((mac, alias, time, date, c_to_f(temp)))
         
@@ -43,15 +43,16 @@ def index():
 
 @app.route('/details/<mac>')
 def details(mac:str):
+    hist_length = 12
     db = get_db()
 
-    cur = db.execute('select mac, devalias from aliases where mac="{}"'.format(mac))
-    _, alias = cur.fetchone()
-    cur = db.execute('select max(id), mac, unixtime, temperature from temp_records where mac="{}"'.format(mac))
-    _, _, unixtime, temp = cur.fetchone()
-    time, date = format_gmt_for_local(unixtime)
-    
-    return render_template('details.html', mac=mac, alias=alias, time=time, date=date, temp=c_to_f(temp))
+    cur = db.execute('select devalias from aliases where mac="{}"'.format(mac))
+    alias, = cur.fetchone()
+    cur = db.execute('select unixtime, temperature from temp_records where mac="{}" order by id desc limit {}'.format(mac, hist_length))
+    data = cur.fetchall()
+    assert len(data) <= hist_length
+
+    return render_template('details.html', mac=mac, alias=alias, data=data, tdformat=format_gmt_for_local, tempformat=c_to_f)
 
 @app.route('/details/<mac>/set_alias', methods=['POST'])
 def set_alias(mac:str):

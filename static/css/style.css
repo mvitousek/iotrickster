@@ -10,3 +10,19 @@ ul.templist     { list-style-type: circle; }
 
 .set-alias      { font-size: 0.9em; border-bottom: 1px solid #ccc; }
 .set-alias dl   { font-weight: bold; }
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}

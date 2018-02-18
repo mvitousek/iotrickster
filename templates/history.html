@@ -1,0 +1,18 @@
+{% extends "template.html" %}
+{% block body %}
+<h1> Device <i>{{ alias|safe }}</i></h1>
+    {% set count = data|length %}
+    {% set offset = offset|int %}
+    <h2>Readings {{ offset + 1 }}-{{ offset + count }}:</h2>
+    <table class="hist-table">
+      {% for td, temp in data %}
+      {% set time, date = tdformat(td) %}
+      <tr><td>{{ date }}</td> <td>{{ time }}</td> <td>{{ tempformat(temp) }}</td></tr>
+      {% endfor %}
+    </table>
+    {% if offset > 0 %} <a href={{ url_for('history', mac=mac, count=count, offset=(0 if offset > count else (offset - count))) }}>Back</a> {% endif %}
+    {% if total > offset + count %} <a href={{ url_for('history', mac=mac, count=count, offset=offset+count) }}>Next</a> {% endif %}
+    <br>
+    <a href={{ url_for('details', mac=mac) }}>Return to details</a><br>
+    <a href={{ url_for('index') }}>Return to device list</a>
+{% endblock %}

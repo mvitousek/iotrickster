@@ -6,7 +6,7 @@
   {% endif %}  
   {% set td, temp = data[0] %}
   {% set time, date = tdformat(td) %}
-  <h2>Current temperature: <b>{{ tempformat(temp)|round(1) }}°F</b></h2>
+  <h2>Current temperature: <b>{{ tempformat(temp) }}</b></h2>
   <h2>Last recorded: <b>{{ time }}, {{ date }}</b></h2>
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
@@ -19,8 +19,9 @@
     <table class="hist-table">
       {% for td, temp in data %}
       {% set time, date = tdformat(td) %}
-      <tr><td>{{ date }}</td> <td>{{ time }}</td> <td>{{ tempformat(temp)|round(1) }}°F</td></tr>
+      <tr><td>{{ date }}</td> <td>{{ time }}</td> <td>{{ tempformat(temp) }}</td></tr>
       {% endfor %}
     </table>
+    <a href={{ url_for('history', mac=mac, count=50, offset=0) }}>Show more history</a><br>
     <a href={{ url_for('index') }}>Return to device list</a>
 {% endblock %}

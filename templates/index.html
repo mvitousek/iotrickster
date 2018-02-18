@@ -4,7 +4,7 @@
   <ul class="templist">
   {% for mac, alias, time, date, temp in data %}
   <li><h2><a href={{ url_for('details', mac=mac) }}> {{ alias|safe }}</a></h2>
-    {{ temp|round(1) }}°F at {{ time }}, {{ date }}</li>
+    {{ tempformat(temp) }} at {{ time }}, {{ date }}</li>
   {% else %}
     <li><em>No devices</em></li>
   {% endfor %}

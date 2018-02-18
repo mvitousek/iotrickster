@@ -1,6 +1,8 @@
 <!doctype html>
 <title>IoTrickster</title>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+{% block head %} {% endblock %}
+
 <div class="page">
   {% block body %}{% endblock %}
 </div>

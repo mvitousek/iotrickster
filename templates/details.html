@@ -1,4 +1,7 @@
 {% extends "template.html" %}
+{% block head %}
+<script src={{ url_for('static', filename='js/plotly-latest.min.js') }}></script>
+{% endblock %}
 {% block body %}
   <h1> Device <i>{{ alias|safe }}</i></h1> 
   {% if mac != alias %}

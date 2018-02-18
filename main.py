@@ -73,7 +73,7 @@ def history(mac:str, count:int, offset:int):
     cur = db.execute('select count(*) from temp_records where mac="{}"'.format(mac, count, offset))
     total, = cur.fetchone()
     
-    return render_template('history.html', mac=mac, alias=alias, offset=offset, data=data, total=total, tdformat=format_gmt_for_local, tempformat=c_to_f)
+    return render_template('history.html', mac=mac, alias=alias, offset=offset, count=count, data=data, total=total, tdformat=format_gmt_for_local, tempformat=c_to_f)
 
 @app.route('/details/<mac>/set_alias', methods=['POST'])
 def set_alias(mac:str):

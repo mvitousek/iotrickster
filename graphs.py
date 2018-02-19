@@ -56,8 +56,7 @@ def graph_temp(db, mac):
                         'label': '1y',
                         'step': 'year',
                         'stepmode': 'backward'
-                    },
-                    {'step': 'all'}
+                    }
                 ]},
                 'type': 'date'
             }

@@ -26,8 +26,7 @@ app.config.from_object(__name__)
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DEBUG=True,
-    DATABASE=os.path.join(app.root_path, 'database', 'iotrickster.db'),
-    LATEST={}
+    DATABASE=os.path.join(app.root_path, 'database', 'iotrickster.db')
 ))
 
 app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
@@ -49,12 +48,8 @@ def index():
     return render_template('index.html', data=data, tempformat=c_to_f)
 
 def get_last(db:DB, mac:str)->Tuple[int, float]:
-    latest = get_latest()
-    if mac in latest:
-        unixtime, temp, _ = latest[mac]
-    else:
-        cur = db.execute('select max(id), unixtime, temperature from temp_records where mac="{}"'.format(mac))
-        _, unixtime, temp = cur.fetchone()
+    cur = db.execute('select max(id), unixtime, temperature from temp_short_term_records where mac="{}"'.format(mac))
+    _, unixtime, temp = cur.fetchone()
     return unixtime, temp
     
 
@@ -72,12 +67,12 @@ def details(mac:str):
     db = get_db()
 
     alias = get_alias(db, mac)
+    unixtime, temp = get_last(db, mac)
     data = get_logs(db, mac, 12)
     assert len(data) <= 12
 
     graph = graphs.graph_temp(db, mac)
 
-    unixtime, temp = get_last(db, mac)
     
     return render_template('details.html', last_time=unixtime, last_temp=temp, graph=graph, mac=mac, alias=alias, data=data, tdformat=format_gmt_for_local, tempformat=c_to_f)
 
@@ -112,39 +107,22 @@ def signal_temp():
     unixtime = time.time()
     
     db = get_db()
-    latest = get_latest()
     
-    if mac not in latest:
-        cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
-        exists = cur.fetchone()[0]
-        recents = []
-        if not exists:
-            db.execute('insert into aliases (mac, devalias) values ("{}", "{}")'.format(mac, mac))
+    cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
+    exists, = cur.fetchone()
+    if not exists:
+        db.execute('insert into aliases (mac, devalias) values ("{}", "{}")'.format(mac, mac))
+        db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))
     else:
-        _, _, recents = latest[mac]
-        exists = True
-
-    # If this is the first time we've seen this thing then we definitely insert into DB, otherwise we have to check
-    if mac in latest or exists:
-        
-        # Don't use get_latest here, because we want to know if it's time to make another permanent record
-        cur = db.execute('select max(id), unixtime, temperature from temp_records where mac="{}"'.format(mac))
-        _, last_db_time, last_db_temp = cur.fetchone()
-
-        need_to_insert = unixtime - last_db_time > DB_INTERVAL_SECONDS
-        print(need_to_insert)
-    else:
-        need_to_insert = True
-
-    recents.append(temp)
-    if need_to_insert:
-        # Insert a record into the temperature log.
-        avg_temp = sum(recents) / len(recents)
-        db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, avg_temp))
-        recents = []
-        
-    latest[mac] = unixtime, temp, recents
-
+        cur = db.execute('select unixtime, temperature from temp_short_term_records where mac="{}" order by id'.format(mac))
+        top_time, _ = cur.fetchone()
+        if unixtime - top_time > DB_INTERVAL_SECONDS:
+            # Intentionally ignore the first element, which was already recorded
+            temps = zip(*cur.fetchall())
+            avg_temp = sum(temps + [temp]) / (len(temps) + 1)
+            db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, avg_temp))
+            db.execute('delete from temp_short_term_records where mac="{}"'.format(mac))
+    db.execute('insert into temp_short_term_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))
     db.commit()
 
     # redirect is unneccessary, dunno what else to put here
@@ -182,11 +160,6 @@ def get_db()->DB:
     if not hasattr(g, 'sqlite_db'):
         g.sqlite_db = connect_db()
     return g.sqlite_db
-
-def get_latest()->Dict[str, Tuple[int, float]]:
-    if not hasattr(g, 'latest_dict'):
-        g.latest_dict = app.config['LATEST']
-    return g.latest_dict
 
 def connect_db()->DB:
     rv = sql.connect(app.config['DATABASE'])

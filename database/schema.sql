@@ -5,7 +5,7 @@ create table aliases (
 );
 
 drop table if exists temp_short_term_records;
-create table aliases (
+create table temp_short_term_records (
         id integer not null primary key autoincrement,
 	mac text not null,
 	unixtime integer not null,

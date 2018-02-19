@@ -24,7 +24,6 @@ def graph_temp(db, mac):
                 'ticksuffix': '°F'
             },
             'xaxis': {
-                'autorange': True,
                 'range': [times[-1] - timedelta(days=1), times[-1]],
                 'rangeselector': {'buttons': [
                     {

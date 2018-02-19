@@ -24,7 +24,7 @@ def graph_temp(db, mac):
                 'ticksuffix': '°F'
             },
             'xaxis': {
-                'range': [times[-1] - timedelta(days=1), times[-1]],
+                'type': 'date',
                 'rangeselector': {'buttons': [
                     {
                         'count': 1,
@@ -57,7 +57,7 @@ def graph_temp(db, mac):
                         'stepmode': 'backward'
                     }
                 ]},
-                'type': 'date'
+                'range': [times[-1] - timedelta(days=1), times[-1]]
             }
         }
     }

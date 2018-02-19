@@ -4,10 +4,9 @@
   {% if mac != alias %}
   (unique id <i>{{ mac }}</i>)
   {% endif %}  
-  {% set td, temp = data[0] %}
-  {% set time, date = tdformat(td) %}
-  <h2>Current temperature: <b>{{ tempformat(temp) }}</b></h2>
-  <h2>Last recorded: <b>{{ time }}, {{ date }}</b></h2>
+  {% set last_time, last_date = tdformat(last_time) %}
+  <h2>Current temperature: <b>{{ tempformat(last_temp) }}</b></h2>
+  <h2>Last recorded: <b>{{ last_time }}, {{ last_date }}</b></h2>
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
         <dt>Change alias for <i>{{ alias|safe }}</i>:
@@ -16,7 +15,7 @@
       </dl>
     </form>
     <div id="temp-graph"></div>
-    <h2>Last {{ data|length }} readings:</h2>
+    <h2>Last {{ data|length }} hourly readings:</h2>
     <table class="hist-table">
       {% for td, temp in data %}
       {% set time, date = tdformat(td) %}

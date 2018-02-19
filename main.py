@@ -2,6 +2,8 @@ import os.path
 import time, calendar
 import sqlite3 as sql
 
+import graphs
+
 from flask import *
 
 try:
@@ -62,7 +64,9 @@ def details(mac:str):
     data = get_logs(db, mac, 12)
     assert len(data) <= 12
 
-    return render_template('details.html', mac=mac, alias=alias, data=data, tdformat=format_gmt_for_local, tempformat=c_to_f)
+    graph = graphs.graph_temp(db, mac)
+
+    return render_template('details.html', graph=graph, mac=mac, alias=alias, data=data, tdformat=format_gmt_for_local, tempformat=c_to_f)
 
 @app.route('/details/<mac>/<count>/<offset>')
 def history(mac:str, count:int, offset:int):

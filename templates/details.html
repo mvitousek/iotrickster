@@ -1,7 +1,4 @@
 {% extends "template.html" %}
-{% block head %}
-<script src={{ url_for('static', filename='js/plotly-latest.min.js') }}></script>
-{% endblock %}
 {% block body %}
   <h1> Device <i>{{ alias|safe }}</i></h1> 
   {% if mac != alias %}
@@ -18,6 +15,7 @@
         <dd><input type="submit" value="Confirm">
       </dl>
     </form>
+    <div id="temp-graph"></div>
     <h2>Last {{ data|length }} readings:</h2>
     <table class="hist-table">
       {% for td, temp in data %}
@@ -27,4 +25,13 @@
     </table>
     <a href={{ url_for('history', mac=mac, count=50, offset=0) }}>Show more history</a><br>
     <a href={{ url_for('index') }}>Return to device list</a>
+{% endblock %}
+{% block foot %}
+<!-- Plotly.js -->
+<script src={{ url_for('static', filename='js/plotly-latest.min.js') }}></script>
+<script type="text/javascript">
+  var myDiv = document.getElementById('temp-graph');
+  var graph = {{graph | safe}};
+  Plotly.plot("temp-graph", graph.data, graph.layout || {});
+</script>
 {% endblock %}

@@ -118,8 +118,8 @@ def signal_temp():
         top_time, _ = cur.fetchone()
         if unixtime - top_time > DB_INTERVAL_SECONDS:
             # Intentionally ignore the first element, which was already recorded
-            temps = zip(*cur.fetchall())
-            avg_temp = sum(temps + [temp]) / (len(temps) + 1)
+            temps, _ = zip(*cur.fetchall())
+            avg_temp = (sum(temps) + temp) / (len(temps) + 1)
             db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, avg_temp))
             db.execute('delete from temp_short_term_records where mac="{}"'.format(mac))
     db.execute('insert into temp_short_term_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))

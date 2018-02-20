@@ -102,7 +102,6 @@ def set_alias(mac:str):
 # Sensors POST to this address, shouldn't be usable from browser
 @app.route('/signal/temp', methods=['POST'])
 def signal_temp():
-    print('signalled')
     # Request has mac address 'mac' and temperature 'temp' fields
     mac = request.form['mac']
     temp = float(request.form['temp'])
@@ -113,19 +112,20 @@ def signal_temp():
     cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
     exists, = cur.fetchone()
     if not exists:
-        print('new record')
         db.execute('insert into aliases (mac, devalias) values ("{}", "{}")'.format(mac, mac))
         db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))
     else:
         cur = db.execute('select unixtime, temperature from temp_short_term_records where mac="{}" order by id'.format(mac))
         top_time, _ = cur.fetchone()
-        print(unixtime - top_time)
         if unixtime - top_time > DB_INTERVAL_SECONDS:
             # Intentionally ignore the first element, which was already recorded
-            _, temps = zip(*cur.fetchall())
-            temps = list(temps)
-            print(temps, temp)
-            avg_temp = (sum(temps) + temp) / (len(temps) + 1)
+            rows = cur.fetchall()
+            if len(rows) > 0:
+                _, temps = zip(*rows)
+                temps = list(temps)
+                avg_temp = (sum(temps) + temp) / (len(temps) + 1)
+            else:
+                avg_temp = temp
             db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, avg_temp))
             db.execute('delete from temp_short_term_records where mac="{}"'.format(mac))
     db.execute('insert into temp_short_term_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))

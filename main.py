@@ -18,7 +18,8 @@ Row = sql.Row
 
 
 HOST, PORT = 'localhost', 8712
-DB_INTERVAL_SECONDS = 3600
+#DB_INTERVAL_SECONDS = 3600
+DB_INTERVAL_SECONDS = 30
 
 app = Flask('iotrickster')
 app.config.from_object(__name__)
@@ -119,6 +120,8 @@ def signal_temp():
         if unixtime - top_time > DB_INTERVAL_SECONDS:
             # Intentionally ignore the first element, which was already recorded
             _, temps = zip(*cur.fetchall())
+            temps = list(temps)
+            print(temps, temp)
             avg_temp = (sum(temps) + temp) / (len(temps) + 1)
             db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, avg_temp))
             db.execute('delete from temp_short_term_records where mac="{}"'.format(mac))

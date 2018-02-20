@@ -18,8 +18,7 @@ Row = sql.Row
 
 
 HOST, PORT = 'localhost', 8712
-#DB_INTERVAL_SECONDS = 3600
-DB_INTERVAL_SECONDS = 30
+DB_INTERVAL_SECONDS = 3600
 
 app = Flask('iotrickster')
 app.config.from_object(__name__)

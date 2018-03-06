@@ -31,19 +31,23 @@ app.config.update(dict(
 
 app.config.from_envvar('IOTRICKSTER_SETTINGS', silent=True)
 
+@app.context_processor
+def utility_processor():
+    return dict(time=time.time)
+
 @app.route('/')
 def index():
     db = get_db()
 
     # Get all devices and their names
-    cur = db.execute('select mac, devalias from aliases order by lower(devalias)')
+    cur = db.execute('select mac, devalias, intermittent from aliases order by lower(devalias)')
     devices = cur.fetchall()
     
     data = []
-    for mac, alias in devices:
+    for mac, alias, intermittent in devices:
         unixtime, temp = get_last(db, mac)
         time, date = format_gmt_for_local(unixtime)
-        data.append((mac, alias, time, date, temp))
+        data.append((mac, alias, bool(int(intermittent)), unixtime, time, date, temp))
         
     return render_template('index.html', data=data, tempformat=c_to_f)
 
@@ -62,11 +66,13 @@ def get_alias(db:DB, mac:str)->str:
     alias, = cur.fetchone()
     return alias
 
-@app.route('/details/<mac>')
+@app.route('/<mac>')
 def details(mac:str):
     db = get_db()
 
-    alias = get_alias(db, mac)
+    cur = db.execute('select devalias, intermittent from aliases where mac="{}"'.format(mac))
+    alias, intermittent = cur.fetchone()
+
     unixtime, temp = get_last(db, mac)
     data = get_logs(db, mac, 12)
     assert len(data) <= 12
@@ -74,9 +80,11 @@ def details(mac:str):
     graph = graphs.graph_temp(db, mac)
 
     
-    return render_template('details.html', last_time=unixtime, last_temp=temp, graph=graph, mac=mac, alias=alias, data=data, tdformat=format_gmt_for_local, tempformat=c_to_f)
+    return render_template('details.html', last_time=unixtime, last_temp=temp, graph=graph, mac=mac, 
+                           alias=alias, intermittent=bool(int(intermittent)), data=data, 
+                           tdformat=format_gmt_for_local, tempformat=c_to_f)
 
-@app.route('/details/<mac>/<count>/<offset>')
+@app.route('/<mac>/<count>-<offset>')
 def history(mac:str, count:int, offset:int):
     db = get_db()
 
@@ -87,12 +95,32 @@ def history(mac:str, count:int, offset:int):
     
     return render_template('history.html', mac=mac, alias=alias, offset=offset, count=count, data=data, total=total, tdformat=format_gmt_for_local, tempformat=c_to_f)
 
-@app.route('/details/<mac>/set_alias', methods=['POST'])
+@app.route('/<mac>/set_alias', methods=['POST'])
 def set_alias(mac:str):
     alias = request.form['new_alias']
     
     db = get_db()
     db.execute('update aliases set devalias="{}" where mac="{}"'.format(alias, mac))
+    db.commit()
+    
+    return redirect(url_for('details', mac=mac))
+
+@app.route('/<mac>/delete', methods=['POST'])
+def delete(mac:str):
+    db = get_db()
+    db.execute('delete from aliases where mac="{}"'.format(mac))
+    db.execute('delete from temp_records where mac="{}"'.format(mac))
+    db.execute('delete from temp_short_term_records where mac="{}"'.format(mac))
+    db.commit()
+    
+    return redirect(url_for('index'))
+
+@app.route('/<mac>/intermittent', methods=['POST'])
+def intermittent(mac:str):
+    intermittent = request.form['intermittent']
+
+    db = get_db()
+    db.execute('update aliases set intermittent={} where mac="{}"'.format(intermittent, mac))
     db.commit()
     
     return redirect(url_for('details', mac=mac))
@@ -104,6 +132,10 @@ def signal_temp():
     # Request has mac address 'mac' and temperature 'temp' fields
     mac = request.form['mac']
     temp = float(request.form['temp'])
+    
+    if temp == 85:
+        return redirect(url_for('index'))
+
     unixtime = time.time()
     
     db = get_db()
@@ -111,7 +143,7 @@ def signal_temp():
     cur = db.execute('select exists (select 1 from aliases where mac="{}" limit 1)'.format(mac))
     exists, = cur.fetchone()
     if not exists:
-        db.execute('insert into aliases (mac, devalias) values ("{}", "{}")'.format(mac, mac))
+        db.execute('insert into aliases (mac, devalias, intermittent) values ("{}", "{}", 0)'.format(mac, mac))
         db.execute('insert into temp_records (mac, unixtime, temperature) values (\"{}\", {}, {})'.format(mac, unixtime, temp))
     else:
         cur = db.execute('select unixtime, temperature from temp_short_term_records where mac="{}" order by id'.format(mac))
@@ -147,16 +179,9 @@ def unix_to_local(epoch:int)->time.struct_time:
 
 def format_gmt_for_local(epoch:int)->Tuple[str,str]:
     t = unix_to_local(epoch)
-    ampm = 'am'
-    hour = t.tm_hour
-    if hour == 0:
-        hour = 12
-    elif hour >= 12:
-        ampm = 'pm'
-        if hour > 12:
-            hour -= 12
-    return '{}:{:02d}:{:02d}{}'.format(hour, t.tm_min, t.tm_sec, ampm),\
-           '{}/{}/{}'.format(t.tm_year, t.tm_mon, t.tm_mday)
+    daytime = time.strftime('%I:%M%p', t)
+    yeartime = time.strftime('%a, %b %-d, %Y', t)
+    return daytime, yeartime
 
 def get_db()->DB:
     """Opens a new database connection if there is none yet for the

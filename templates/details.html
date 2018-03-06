@@ -3,16 +3,20 @@
   <h1> Device <i>{{ alias|safe }}</i></h1> 
   {% if mac != alias %}
   (unique id <i>{{ mac }}</i>)
-  {% endif %}  
-  {% set last_time, last_date = tdformat(last_time) %}
+  {% endif %}
+  {% set cur_time = time() %}
+  {% set last_daytime, last_date = tdformat(last_time) %}
   <h2>Current temperature: <b>{{ tempformat(last_temp) }}</b></h2>
-  <h2>Last recorded: <b>{{ last_time }}, {{ last_date }}</b></h2>
+  <h2>Last recorded: <b><font {% if (not intermittent and cur_time - last_time > 7200) or (intermittent and cur_time - last_time > 86400) %} color="red" {% endif %}>  {{ last_daytime }}, {{ last_date }}</font></b></h2>
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
       <dl>
         <dt>Change alias for <i>{{ alias|safe }}</i>:
-        <dd><input type="text" size="30" name="new_alias" value="{{ alias|safe }}">
-        <dd><input type="submit" value="Confirm">
+        <dd><input type="text" size="30" name="new_alias" value="{{ alias|safe }}" />
+        <dd><input type="submit" value="Confirm" />
       </dl>
+    </form>
+    <form action="{{ url_for('delete', mac=mac) }}" method="post" class="delete">
+      <input type="submit" value="Delete device" />
     </form>
     <div id="temp-graph"></div>
     <h2>Last {{ data|length }} hourly readings:</h2>

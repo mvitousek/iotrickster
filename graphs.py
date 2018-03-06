@@ -3,17 +3,25 @@ from datetime import datetime, timedelta
 import json
 import plotly
 
+
 def graph_temp(db, mac):
     cur = db.execute('select unixtime, temperature from temp_records where mac="{}" order by id'.format(mac))
-    data = cur.fetchall()
 
-    unixtimes, temps = zip(*data)
-    times = [datetime.fromtimestamp(t) for t in unixtimes]
+    times, temps = [], []
+    last_time = None
+
+    for time, temp in cur.fetchall():
+        if last_time is not None and time - last_time > 7200:
+            times.append(None)
+            temps.append(0)
+        last_time = time
+        times.append(datetime.fromtimestamp(time))
+        temps.append(temp * (9 / 5) + 32)
 
     graph = {
         'data': [ {
             'x': times,
-            'y': [c * (9 / 5) + 32 for c in temps],
+            'y': temps,
             'type': 'scatter',
             'mode': 'lines'
         } ],
@@ -21,10 +29,26 @@ def graph_temp(db, mac):
             'title': 'Temperature',
             'yaxis': {
                 'autorange': True,
-                'ticksuffix': '°F'
+                'ticksuffix': '°F',
+                'tickformat': '.1f'
             },
             'xaxis': {
                 'type': 'date',
+                'tickformatstops':
+                [
+                    {
+                        'dtickrange': [0, 1000 * 60 * 60 * 12],
+                        'value': '%-I:%M%p'
+                    },
+                    {
+                        'dtickrange': [1000 * 60 * 60 * 12, 1000 * 60 * 60 * 24 * 28],
+                        'value': '%-I:%M%p, %b %-d'
+                    },
+                    {
+                        'dtickrange': [1000 * 60 * 60 * 24 * 28, None],
+                        'value': '%b %-d, %Y'
+                    }
+                ],
                 'rangeselector': {'buttons': [
                     {
                         'count': 1,

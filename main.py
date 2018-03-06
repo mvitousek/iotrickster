@@ -84,6 +84,13 @@ def details(mac:str):
                            alias=alias, intermittent=bool(int(intermittent)), data=data, 
                            tdformat=format_gmt_for_local, tempformat=c_to_f)
 
+@app.route('/<mac>/raw')
+def raw(mac:str):
+    db = get_db()
+    unixtime, temp = get_last(db, mac)
+    
+    return '{}\n{}\n'.format(unixtime, temp)
+
 @app.route('/<mac>/<count>-<offset>')
 def history(mac:str, count:int, offset:int):
     db = get_db()
@@ -180,8 +187,8 @@ def unix_to_local(epoch:int)->time.struct_time:
 
 def format_gmt_for_local(epoch:int)->Tuple[str,str]:
     t = unix_to_local(epoch)
-    daytime = time.strftime('%I:%M%p', t)
-    yeartime = time.strftime('%a, %b %-d, %Y', t)
+    daytime = time.strftime('%-I:%M%p', t)
+    yeartime = time.strftime('%a, %b %-d %Y', t)
     return daytime, yeartime
 
 def get_db()->DB:

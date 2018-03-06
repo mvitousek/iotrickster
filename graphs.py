@@ -26,7 +26,7 @@ def graph_temp(db, mac):
             'mode': 'lines'
         } ],
         'layout': {
-            'title': 'Temperature',
+            'title': 'History',
             'yaxis': {
                 'autorange': True,
                 'ticksuffix': '°F',

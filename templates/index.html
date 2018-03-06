@@ -4,8 +4,9 @@
   <ul class="templist">
   {% set cur_time = time() %}
   {% for mac, alias, intermittent, timestamp, time, date, temp in data %}
+  {% set missing = (not intermittent and cur_time - timestamp > 7200) or (intermittent and cur_time - timestamp > 86400) %}
   <li><h2><a href={{ url_for('details', mac=mac) }}> {{ alias|safe }}</a></h2>
-    {{ tempformat(temp) }} at <font {% if (not intermittent and cur_time - timestamp > 7200) or (intermittent and cur_time - timestamp > 86400) %} color="red" {% endif %}> {{ time }}, {{ date }}</font></li>
+    {{ tempformat(temp) }} at <font {% if missing %} color="red" {% endif %}> {{ time }}, {{ date }}</font></li>
   {% else %}
     <li><em>No devices</em></li>
   {% endfor %}

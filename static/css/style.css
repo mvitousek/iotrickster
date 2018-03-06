@@ -8,8 +8,12 @@ h2              { font-size: 1.2em; }
                   padding: 0.8em; background: white; }
 ul.templist     { list-style-type: circle; }
 
-.set-alias      { font-size: 0.9em; border-bottom: 1px solid #ccc; }
-.set-alias dl   { font-weight: bold; }
+.missingsensor { color: red; }
+.detectedsensor { }
+
+.set-alias      { 
+    display: inline; 
+}
 
 table {
     font-family: arial, sans-serif;
@@ -25,4 +29,131 @@ td, th {
 
 tr:nth-child(even) {
     background-color: #dddddd;
+}
+
+.input {
+    background-color: #377ba8; 
+    border: 2px solid #4CAF50; /* Green */
+    color: white;
+    padding: 10px 10px;
+    margin: 4px 2px;
+    border-radius: 2px;
+    text-decoration: none;
+    font-size: 12px;
+    display: inline;
+    -webkit-transition-duration: 0.3s; /* Safari */
+    transition-duration: 0.3s;
+}
+.input:hover {
+    background-color: white; /* Green */
+    color: black;
+}
+
+.button {
+    background-color: #377ba8; 
+    border: 2px solid #4CAF50; /* Green */
+    color: white;
+    padding: 10px 24px;
+    margin: 4px 2px;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-transition-duration: 0.3s; /* Safari */
+    transition-duration: 0.3s;
+}
+.button:hover {
+    background-color: white; /* Green */
+    color: black;
+}
+
+/* Customize the label (the container) */
+.checklab {
+  background-color: #377ba8; 
+  display: inline-block;
+  border: 2px solid #4CAF50; /* Green */
+  color: white;
+  padding: 10px 24px;
+  margin: 4px 2px;
+  padding-left: 34px;
+  border-radius: 2px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  cursor: pointer;
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-transition-duration: 0.3s; /* Safari */
+  transition-duration: 0.3s;
+}
+
+.checklab:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Hide the browser's default checkbox */
+.checklab input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 6px;
+  left: 4px;
+  border-radius: 2px;
+  height: 20px;
+  width: 20px;
+  border: 1px solid #4CAF50; /* Green */
+  background-color: #eee;
+}
+
+
+
+/* When the checkbox is checked, add a blue background */
+.checklab input:checked ~ .checkmark {
+  background-color: #377ba8; 
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.checklab input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.checklab .checkmark:after {
+  left: 6px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.text {
+    display: inline;
+}
+
+.buttonform {
+    display: inline;
 }

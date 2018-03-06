@@ -4,20 +4,22 @@
   {% if mac != alias %}
   (unique id <i>{{ mac }}</i>)
   {% endif %}
-  {% set cur_time = time() %}
   {% set last_daytime, last_date = tdformat(last_time) %}
   <h2>Current temperature: <b>{{ tempformat(last_temp) }}</b></h2>
-  <h2>Last recorded: <b><font {% if (not intermittent and cur_time - last_time > 7200) or (intermittent and cur_time - last_time > 86400) %} color="red" {% endif %}>  {{ last_daytime }}, {{ last_date }}</font></b></h2>
+  <h2>Last recorded: <b><span id="lastseen">{{ last_daytime }}, {{ last_date }}</span></b></h2>
+  
     <form action="{{ url_for('set_alias', mac=mac) }}" method="post" class="set-alias">
-      <dl>
-        <dt>Change alias for <i>{{ alias|safe }}</i>:
-        <dd><input type="text" size="30" name="new_alias" value="{{ alias|safe }}" />
-        <dd><input type="submit" value="Confirm" />
-      </dl>
+      <input class="input" type="text" size="10" id="newalias" name="newalias" placeholder="New alias" required/>
+      <input class="button" type="submit" value="Set alias" />
     </form>
-    <form action="{{ url_for('delete', mac=mac) }}" method="post" class="delete">
-      <input type="submit" value="Delete device" />
+    <form action="{{ url_for('delete', mac=mac) }}" method="post" class="buttonform">
+      <input class="button" type="submit" value="Delete device" onclick="return confirm('Really delete device {{ alias|safe }}?')" />
     </form>
+    <label class="checklab">Intermittent
+      <input type="checkbox" id="intermittent" {% if intermittent %} checked {% endif %} />
+      <span class="checkmark"></span>
+    </label>
+
     <div id="temp-graph"></div>
     <h2>Last {{ data|length }} hourly readings:</h2>
     <table class="hist-table">
@@ -32,9 +34,44 @@
 {% block foot %}
 <!-- Plotly.js -->
 <script src={{ url_for('static', filename='js/plotly-latest.min.js') }}></script>
+<!-- JQuery -->
+<script src={{ url_for('static', filename='js/jquery-3.3.1.min.js') }}></script>
+
 <script type="text/javascript">
-  var myDiv = document.getElementById('temp-graph');
-  var graph = {{graph | safe}};
-  Plotly.plot("temp-graph", graph.data, graph.layout || {});
+var intermittent = "{{ intermittent }}" == "{{ True }}";
+
+{% set cur_time = time() %}
+function update_lastseen() {
+  if ((!intermittent && {{ cur_time - last_time }} > 7200) || ( {{ cur_time - last_time }} > 86400)) {
+    $("#lastseen").attr('class', 'missingsensor');
+  } else {
+    $("#lastseen").attr('class', 'detectedsensor');
+  }
+}
+
+update_lastseen();
+
+var graph = {{graph | safe}};
+Plotly.plot("temp-graph", graph.data, graph.layout || {});
+
+$("#intermittent").change(function() {
+    var url = "{{ url_for('intermittent', mac=mac) }}"; // the script where you handle the form input.
+
+    if ($('#intermittent').is(":checked")) {
+      var checked = 1; 
+    } else { 
+      var checked = 0;
+    }
+
+    $.ajax({
+           type: "POST",
+           url: url,
+           data: { intermittent : checked },
+           success: function(data) { 
+             intermittent = checked;
+             update_lastseen();
+           }
+         });
+});
 </script>
 {% endblock %}

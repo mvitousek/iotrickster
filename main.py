@@ -97,7 +97,7 @@ def history(mac:str, count:int, offset:int):
 
 @app.route('/<mac>/set_alias', methods=['POST'])
 def set_alias(mac:str):
-    alias = request.form['new_alias']
+    alias = request.form['newalias']
     
     db = get_db()
     db.execute('update aliases set devalias="{}" where mac="{}"'.format(alias, mac))
@@ -118,6 +118,7 @@ def delete(mac:str):
 @app.route('/<mac>/intermittent', methods=['POST'])
 def intermittent(mac:str):
     intermittent = request.form['intermittent']
+
 
     db = get_db()
     db.execute('update aliases set intermittent={} where mac="{}"'.format(intermittent, mac))

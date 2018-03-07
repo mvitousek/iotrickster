@@ -1,7 +1,9 @@
 import time
 import threading
+import sys
 import requests
 
+import argparse
 
 try:
     from retic.typing import *
@@ -24,16 +26,24 @@ class BrewPiClientDevice(threading.Thread):
         
         beertemp = data['BeerTemp']
         beertemp = (beertemp - 32) * (5 / 9)
-        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}$beer'.format(self.id)})
+        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}beer'.format(self.id)})
         
         fridgetemp = data['FridgeTemp']
         fridgetemp = (fridgetemp - 32) * (5 / 9)
-        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}$fridge'.format(self.id)})
+        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}fridge'.format(self.id)})
         
         time.sleep(60)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Proxy between existing connected device and IoTrickster')
+    parser.add_argument('host', help='IoTrickster host and port')
+    parser.add_argument('--brewpi', help='BrewPi host and port', default=None)
+    
+    args = parser.parse_args(sys.argv[1:])
+    iotrickster = args.host
+    if args.brewpi:
+        client = BrewPiClientDevice('brewpi', args.brewpi)
+        client.start()
 
+    while True: pass
         
-iotrickster = 'http://localhost:8712'
-dev = BrewPiClientDevice('brewpi', 'http://68.54.119.232:8000')
-dev.start()

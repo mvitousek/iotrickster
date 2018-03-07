@@ -21,18 +21,19 @@ class BrewPiClientDevice(threading.Thread):
             raise Exception('URL should not include a terminating slash')
         self.url = url
     def run(self):
-        data = requests.post('{}/socketmessage.php'.format(self.url), data={'messageType': 'getTemperatures'})
-        data = data.json()
-        
-        beertemp = data['BeerTemp']
-        beertemp = (beertemp - 32) * (5 / 9)
-        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}beer'.format(self.id)})
-        
-        fridgetemp = data['FridgeTemp']
-        fridgetemp = (fridgetemp - 32) * (5 / 9)
-        requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}fridge'.format(self.id)})
-        
-        time.sleep(60)
+        while True:
+            data = requests.post('{}/socketmessage.php'.format(self.url), data={'messageType': 'getTemperatures'})
+            data = data.json()
+
+            beertemp = data['BeerTemp']
+            beertemp = (beertemp - 32) * (5 / 9)
+            requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}beer'.format(self.id)})
+
+            fridgetemp = data['FridgeTemp']
+            fridgetemp = (fridgetemp - 32) * (5 / 9)
+            requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}fridge'.format(self.id)})
+
+            time.sleep(60)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Proxy between existing connected device and IoTrickster')
@@ -41,9 +42,16 @@ if __name__ == '__main__':
     
     args = parser.parse_args(sys.argv[1:])
     iotrickster = args.host
+
+    clients = []
+
     if args.brewpi:
         client = BrewPiClientDevice('brewpi', args.brewpi)
         client.start()
+        clients.append(client)
 
-    while True: pass
+    for client in clients:
+        client.join()
+
+    
         

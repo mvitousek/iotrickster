@@ -26,12 +26,14 @@ class BrewPiClientDevice(threading.Thread):
             data = data.json()
 
             beertemp = data['BeerTemp']
-            beertemp = (beertemp - 32) * (5 / 9)
-            requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}beer'.format(self.id)})
+            if beertemp is not None:
+                beertemp = (beertemp - 32) * (5 / 9)
+                requests.post('{}/signal/temp'.format(iotrickster), data={'temp':beertemp, 'mac':'{}beer'.format(self.id)})
 
             fridgetemp = data['FridgeTemp']
-            fridgetemp = (fridgetemp - 32) * (5 / 9)
-            requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}fridge'.format(self.id)})
+            if fridgetemp is not None:
+                fridgetemp = (fridgetemp - 32) * (5 / 9)
+                requests.post('{}/signal/temp'.format(iotrickster), data={'temp':fridgetemp, 'mac':'{}fridge'.format(self.id)})
 
             time.sleep(60)
 

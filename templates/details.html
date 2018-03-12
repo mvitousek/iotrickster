@@ -1,7 +1,7 @@
 {% extends "template.html" %}
 {% block body %}
 <h1> Device
-  <input class="inputalias" type="text" size="18" id="newalias" name="newalias" value="{{ alias|safe }}"/>
+  <input class="inputalias" type="text" id="newalias" name="newalias" value="{{ alias|safe }}"/>
 </h1> 
   <span id="uid"> 
   {% if mac != alias %}

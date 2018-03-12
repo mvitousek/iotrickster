@@ -80,6 +80,7 @@ tr:nth-child(even) {
     font-size: 30px;
     display: inline;
     outline: none;
+    width: 75%;
     -webkit-transition-duration: 0.3s; /* Safari */
     transition-duration: 0.3s;
 }
@@ -205,14 +206,4 @@ tr:nth-child(even) {
 
 .buttonform {
     display: inline;
-}
-
-.footer {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  padding: 3rem;
-  text-align: center;
-  font-size: small;
 }

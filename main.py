@@ -91,10 +91,13 @@ def raw(mac:str):
     
     return '{}\n{}\n'.format(unixtime, temp)
 
-@app.route('/<mac>/<count>-<offset>')
-def history(mac:str, count:int, offset:int):
+@app.route('/<mac>/history')
+def history(mac:str):
     db = get_db()
 
+    count = request.args.get('count', 50)
+    offset = request.args.get('offset', 0)
+    
     alias = get_alias(db, mac)
     data = get_logs(db, mac, count, offset)
     cur = db.execute('select count(*) from temp_records where mac="{}"'.format(mac, count, offset))

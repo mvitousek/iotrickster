@@ -8,13 +8,14 @@ def graph_temp(db, mac):
     cur = db.execute('select unixtime, temperature from temp_records where mac="{}" order by id'.format(mac))
 
     times, temps = [], []
-    last_time = None
+    last_time, last_temp = None, 0
 
     for time, temp in cur.fetchall():
         if last_time is not None and time - last_time > 7200:
             times.append(None)
-            temps.append(0)
+            temps.append(last_temp) # If we put 0 here, it will affect plotly's axis scaling
         last_time = time
+        last_temp = temp
         times.append(datetime.fromtimestamp(time))
         temps.append(temp * (9 / 5) + 32)
 

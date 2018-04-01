@@ -89,7 +89,7 @@ def raw(mac:str):
     db = get_db()
     unixtime, temp = get_last(db, mac)
     
-    return '{}\n{}\n'.format(unixtime, temp)
+    return '{}\n{:.2f}\n'.format(unixtime, temp)
 
 @app.route('/<mac>/history')
 def history(mac:str):

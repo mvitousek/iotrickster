@@ -203,7 +203,7 @@ def get_db()->DB:
     return g.sqlite_db
 
 def connect_db()->DB:
-    rv = sql.connect(app.config['DATABASE'])
+    rv = sql.connect(app.config['DATABASE'], isolation_level=None)
     rv.row_factory = sql.Row
     return rv
 
